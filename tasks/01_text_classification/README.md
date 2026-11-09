@@ -11,14 +11,17 @@
 - **Near-Duplicate Trap:** Check exact/near duplicates before splitting; group duplicates into the same fold.
 
 ## 3. Escalation Playbook
-- **Tier 1 (CPU, <3 mins):** Word TF-IDF `(1, 2)` + Char-wb TF-IDF `(3, 5)` $\rightarrow$ `RidgeClassifier` / `LogisticRegression(C=...)` / `SGDClassifier(loss='log_loss')` + CatBoost with native `text_features`.
-- **Tier 2 (GPU Backbone):** DeBERTa-v3 (`microsoft/deberta-v3-small` / `base` or `indobenchmark/indobert-base-p1` / `xlm-roberta-base`) + MeanPooling + Multi-Sample Dropout + Cosine Schedule.
-- **Tier 3 (Tricks & Ensembling):**
-  - Long documents (>512 tokens): Head+Tail truncation or Sliding Window + Attention/Mean aggregation across chunks.
+- **Tier 1 (CPU, <3 mins):** Word TF-IDF `(1, 3)` + Char-wb TF-IDF `(3, 5)` + Lexical Stats $\rightarrow$ `LogisticRegression` + `CalibratedClassifierCV(LinearSVC)` + `RidgeClassifier`.
+- **Tier 2 (GPU Backbone):** DeBERTa-v3 (`microsoft/deberta-v3-small` / `base` or `indobenchmark/indobert-base-p1` / `xlm-roberta-base`) + Mean/WeightedLayer Pooling + Multi-Sample Dropout + LLRD + AWP + EMA.
+- **Tier 3 (Tricks & Post-Processing):**
+  - Long documents (>512 tokens): Head+Tail truncation (`head_len=128, tail_len=382`) + Dynamic Padding.
   - Regularization: R-Drop, Adversarial Weight Perturbation (AWP), Layer-wise Learning Rate Decay (LLRD), EMA.
-  - Post-processing: Nelder-Mead class probability multipliers / threshold tuning for Macro-F1; blending TF-IDF + GBDT + Transformer OOFs.
+  - Post-processing: Temperature Scaling + Nelder-Mead class probability multipliers for Macro-F1 + High-Confidence Pseudo-Labeling.
 
 ## 4. Directory Contents
-- `baselines/` — Standalone end-to-end training scripts (`tier1_fast_cpu.py`, `tier2_deberta_oof.py`).
-- `modules/` — Standalone pooling heads (Mean, Max, Attention, WeightedLayer), AWP, EMA, R-Drop.
-- `winners/SUMMARY.md` — Curated Kaggle & competition winning solutions and repository references.
+- `eda_and_data.py` — Class balance, per-class length quantiles, train-test vocabulary OOV overlap, Dirichlet-smoothed log-odds n-grams, `TextClassificationDataset` (Head+Tail truncation), and `DynamicPaddingCollator`.
+- `baselines/tier1_fast_cpu.py` — Standalone Word `(1,3)` + Char-wb `(3,5)` TF-IDF + Lexical stats OOF ensemble (`LogisticRegression` + `CalibratedClassifierCV(LinearSVC)` + `RidgeClassifier`).
+- `baselines/tier2_strong_dl.py` — Standalone PyTorch + HuggingFace OOF trainer with selectable pooling, Multi-Sample Dropout, LLRD, AMP, Cosine schedule, AWP, and ModelEMA.
+- `modules/pooling_and_regularization.py` — Reusable `MeanPooling`, `MaxPooling`, `MeanMaxPooling`, `AttentionPooling`, `WeightedLayerPooling`, `MultiSampleDropout`, `AWP`, `ModelEMA`, and `RDropClassificationLoss`.
+- `postprocess.py` — Temperature scaling calibration, Nelder-Mead class probability multiplier optimizer for Macro-F1, and `select_pseudo_labels()`.
+- `winners/SUMMARY.md` — Curated Kaggle & Indonesian NLP competition winning solutions and architectural playbook.

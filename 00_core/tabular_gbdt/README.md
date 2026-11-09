@@ -1,10 +1,26 @@
 # `00_core/tabular_gbdt/` — Universal GBDT OOF Pipelines
 
 ## Scope
-Standalone Out-Of-Fold training and inference pipelines for **LightGBM**, **CatBoost**, and **XGBoost** supporting classification, regression, ranking (`lambdarank` / `YetiRank`), and multimodal OOF feature stacking.
+Standalone Out-Of-Fold training, inference, and tuning pipelines for **LightGBM**, **CatBoost**, and **XGBoost** supporting `binary`, `multiclass`, `regression`, and `lambdarank`. Every trainer exports `oof_<exp>.npy`, `test_<exp>.npy`, and `sub_<exp>.csv`.
 
-## Planned Standalone Scripts
-- `lgbm_oof_pipeline.py` — LightGBM OOF trainer with categorical handling, early stopping, fold-averaged importance plot/table, and standardized `oof_*.npy` / `test_*.npy` export.
-- `catboost_oof_pipeline.py` — CatBoost OOF trainer with native `cat_features` and `text_features` support (strong baseline for mixed text + tabular datasets).
-- `xgb_oof_pipeline.py` — XGBoost (`hist` tree method) OOF trainer.
-- `optuna_gbdt_tuner.py` — Leak-free CV hyperparameter tuning template with pruning.
+## Scripts & CLI Usage
+- `lgbm_oof_pipeline.py` — LightGBM OOF trainer supporting `binary`, `multiclass`, `regression`, and `lambdarank`, fold-averaged feature importance export, and `HistGradientBoosting` fallback.
+  ```bash
+  python3 00_core/tabular_gbdt/lgbm_oof_pipeline.py --train-path train_folds.parquet --test-path test.parquet --task binary --exp-name lgbm_v1
+  python3 00_core/tabular_gbdt/lgbm_oof_pipeline.py --smoke-test
+  ```
+- `catboost_oof_pipeline.py` — CatBoost OOF trainer with native `cat_features` and `text_features` support.
+  ```bash
+  python3 00_core/tabular_gbdt/catboost_oof_pipeline.py --train-path train_folds.parquet --test-path test.parquet --task binary --exp-name cb_v1
+  python3 00_core/tabular_gbdt/catboost_oof_pipeline.py --smoke-test
+  ```
+- `xgb_oof_pipeline.py` — XGBoost (`tree_method="hist"`, `enable_categorical=True`) OOF trainer.
+  ```bash
+  python3 00_core/tabular_gbdt/xgb_oof_pipeline.py --train-path train_folds.parquet --test-path test.parquet --task binary --exp-name xgb_v1
+  python3 00_core/tabular_gbdt/xgb_oof_pipeline.py --smoke-test
+  ```
+- `optuna_gbdt_tuner.py` — Leak-free K-Fold CV hyperparameter tuner for LightGBM/XGBoost/CatBoost saving best parameters to JSON.
+  ```bash
+  python3 00_core/tabular_gbdt/optuna_gbdt_tuner.py --train-path train_folds.parquet --model-family lgbm --task binary --n-trials 30
+  python3 00_core/tabular_gbdt/optuna_gbdt_tuner.py --smoke-test
+  ```

@@ -3,7 +3,19 @@
 ## Scope
 Standalone scripts to audit unfamiliar datasets within the first 15 minutes of a competition.
 
-## Planned Standalone Scripts
-- `quick_profile_tabular.py` — Shape, dtypes, missingness patterns, cardinality, constant/quasi-constant columns, ID/timestamp ordering checks, target distribution.
-- `quick_profile_text.py` — Character/word/token length percentiles, vocabulary overlap between train and test, language/script detection, special character/HTML/URL noise check.
-- `duplicate_and_leak_check.py` — Exact and near-duplicate (MinHash / char n-gram cosine) detection across train-train (label consistency check) and train-test (leakage / lookup opportunities).
+## Scripts & CLI Usage
+- `quick_profile_tabular.py` — Shape, dtypes, missingness %, cardinality, constant/quasi-constant columns, ID/timestamp monotonicity checks, outlier quantiles (`p01, p05, p50, p95, p99`), target distribution, and train-test mismatch (KS-test for numeric, TVD + Chi2 for categorical).
+  ```bash
+  python3 00_core/eda/quick_profile_tabular.py --train-path train.parquet --test-path test.parquet --target-col target
+  python3 00_core/eda/quick_profile_tabular.py --smoke-test
+  ```
+- `quick_profile_text.py` — Character/word length quantiles (`p10, p50, p90, p95, p99`), empty/whitespace-only string counts, vocabulary overlap & OOV rate between train and test, URL/HTML/emoji/digit/uppercase density, and top class-discriminative unigrams/bigrams via Dirichlet-smoothed log-odds ratio.
+  ```bash
+  python3 00_core/eda/quick_profile_text.py --train-path train.parquet --test-path test.parquet --text-col text --target-col target
+  python3 00_core/eda/quick_profile_text.py --smoke-test
+  ```
+- `duplicate_and_leak_check.py` — Exact SHA-256 hash deduplication + character n-gram `(3, 5)` TF-IDF cosine similarity near-duplicate search across `train-train` (detecting conflicting labels) and `train-test` (detecting exact/near leakage).
+  ```bash
+  python3 00_core/eda/duplicate_and_leak_check.py --train-path train.parquet --test-path test.parquet --text-col text --target-col target
+  python3 00_core/eda/duplicate_and_leak_check.py --smoke-test
+  ```

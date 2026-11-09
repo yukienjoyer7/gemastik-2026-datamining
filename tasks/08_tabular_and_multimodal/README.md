@@ -2,22 +2,26 @@
 
 ## 1. Formulation & Common Competition Metrics
 - **Input:** Structured tabular columns (numerical, categorical, timestamps, entity IDs) optionally paired with free-text fields.
-- **Output:** Binary/multiclass probability, continuous regression target, or survival/ranking score.
-- **Metrics:** ROC-AUC, LogLoss, RMSE, RMSLE, MAE, MAPE, QWK, Macro-F1.
+- **Output:** Binary/multiclass probability, continuous regression target, or ordinal score.
+- **Metrics:** ROC-AUC, LogLoss, RMSE, RMSLE, MAE, Quadratic Weighted Kappa (QWK), Macro-$F_1$.
 
 ## 2. Validation Strategy & Leakage Traps
-- **Out-of-Fold Feature Engineering Rule:** Target encoding, weight-of-evidence, and target-based aggregations **must** be computed strictly inside each CV fold (with smoothing), never on the full dataset before splitting.
-- **Group Aggregation Rule:** Non-target aggregations (`groupby(cat)[num].agg(['mean', 'std', 'min', 'max'])`) can be computed on train or concat(train, test) depending on whether test is observable at inference time.
+- **Out-of-Fold Feature Engineering Rule:** Target encoding (`OOFTargetEncoder`) and supervised text meta-features (`generate_oof_text_meta_feature`) **must** be computed strictly inside each CV fold (with smoothing), never on the full dataset before splitting.
+- **Group Aggregation Rule:** Non-target aggregations (`groupby(cat)[num].agg(['mean', 'std', 'min', 'max'])` + `z-score` + `ratio-to-mean`) are computed via `GroupAggregationTransformer`.
 
 ## 3. Escalation Playbook
-- **Tier 1 (Fast GBDT Baseline):** Raw numeric + frequency/ordinal encoded categoricals $\rightarrow$ LightGBM + CatBoost on locked `train_folds.parquet`.
-- **Tier 2 (Systematic Feature Engineering + Multimodal Text Fusion):**
-  - Numeric ratios/differences, group aggregations (`mean`, `std`, `z-score` relative to group), entity history lags/rolling stats, frequency encoding, OOF smoothed Target Encoding.
-  - **Text + Tabular Fusion (Proven Winner Pattern):** Train a standalone text model (TF-IDF+Ridge and/or fine-tuned DeBERTa) on the text columns to produce **Out-Of-Fold logits/probabilities**, then feed those scalar OOF predictions + truncated SVD of embeddings directly as features into LightGBM / CatBoost / XGBoost.
-- **Tier 3 (Neural Tabular Diversity + Ensembling):**
-  - Add an MLP / ResNet-like tabular net / TabNet / RealMLP trained on scaled + rank-Gauss transformed features for ensemble diversity with GBDTs.
+- **Tier 1 (Automated Feature-Engineered GBDT Baseline — `tier1_fast_cpu.py`):**
+  - Row missingness count + per-column `<col>_isna` flags, datetime cyclical (`sin`/`cos`) & lag features, frequency encoding, leak-free OOF smoothed Target Encoding, group aggregations (`mean`, `std`, `min`, `max`, `diff`, `zscore`, `ratio`), and TF-IDF + `TruncatedSVD` for text columns $\rightarrow$ OOF `LightGBM` / `HistGradientBoostingClassifier`.
+- **Tier 2 (Multimodal Text Fusion + Neural Tabular Diversity — `tier2_strong_dl.py`):**
+  - Stage A: Leak-free OOF text model (`TF-IDF` + `Ridge`) generating scalar `text_oof_logit` meta-features.
+  - Stage B: PyTorch **Tabular ResNet / Gated MLP** (`TabularResNetGatedMLP`) with learned `nn.Embedding` for categoricals + **RankGauss (`QuantileTransformer`)** for numericals + Cosine Annealing & Weight Decay.
+- **Tier 3 (Ensembling & Post-Processing — `postprocess.py`):**
+  - Out-of-fold Nelder-Mead / Rank-Averaging optimizer blending `oof_tier1_tabular.npy` (GBDT) and `oof_tier2_neural.npy` (Neural Tabular) + `OptimizedRounder` for ordinal/integer targets.
 
 ## 4. Directory Contents
-- `baselines/` — Standalone GBDT + automated feature engineering & multimodal text-to-tabular fusion script.
-- `modules/` — Leak-free OOF target encoder, group aggregation generator, rank-Gauss preprocessor.
-- `winners/SUMMARY.md` — Curated Kaggle & competition winning solutions.
+- [`eda_and_data.py`](eda_and_data.py) — Automatic tabular + multimodal schema detector, missingness correlation matrix, target correlation ranking (Pearson + Spearman + Mutual Information), and high-collinearity pair detector.
+- [`baselines/tier1_fast_cpu.py`](baselines/tier1_fast_cpu.py) — Automated Feature-Engineered GBDT Baseline exporting `oof_tier1_tabular.npy`, `test_tier1_tabular.npy`, `sub_tier1_tabular.csv`, and feature importance table.
+- [`baselines/tier2_strong_dl.py`](baselines/tier2_strong_dl.py) — Multimodal Text+Tabular OOF Fusion & PyTorch `TabularResNetGatedMLP` with `RankGauss` scaling exporting `oof_tier2_neural.npy`.
+- [`modules/feature_engineering.py`](modules/feature_engineering.py) — `OOFTargetEncoder`, `GroupAggregationTransformer`, `NumericInteractionGenerator`, `DatetimeFeatureExtractor`, and `RankGaussScaler`.
+- [`postprocess.py`](postprocess.py) — Nelder-Mead / Rank-Averaging GBDT + Neural Tabular blender and `OptimizedRounder`.
+- [`winners/SUMMARY.md`](winners/SUMMARY.md) — Detailed breakdown of winning solutions (AmEx Default Prediction 1st, PetFinder.my 1st, Mercari / IEEE-CIS Fraud Detection 1st).
