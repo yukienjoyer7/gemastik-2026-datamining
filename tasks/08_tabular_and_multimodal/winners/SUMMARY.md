@@ -50,7 +50,10 @@
 
 ## 3. Implementation Mapping in This Repository
 - [`eda_and_data.py`](../eda_and_data.py): Automatic multimodal schema detector (`num_cols`, `cat_low_card`, `cat_high_card`, `text_cols`, `datetime_cols`, `id_cols`), missingness correlation matrix, Pearson/Spearman/Mutual-Information target ranking, and collinearity detector.
-- [`modules/feature_engineering.py`](../modules/feature_engineering.py): `OOFTargetEncoder`, `GroupAggregationTransformer`, `NumericInteractionGenerator`, `DatetimeFeatureExtractor`, and `RankGaussScaler`.
+- [`modules/oof_target_encoder.py`](../modules/oof_target_encoder.py): `OOFTargetEncoder` (Empirical Bayes smoothed out-of-fold target encoding).
+- [`modules/group_aggregations.py`](../modules/group_aggregations.py): `GroupAggregationTransformer` (`mean`, `std`, `min`, `max`, `diff_from_mean`, `zscore`, `ratio_to_mean`).
+- [`modules/numeric_interactions_and_rankgauss.py`](../modules/numeric_interactions_and_rankgauss.py): `NumericInteractionGenerator` and `RankGaussScaler`.
+- [`modules/datetime_features.py`](../modules/datetime_features.py): `DatetimeFeatureExtractor` (cyclical `sin/cos`, business-day flags, entity lag deltas).
 - [`baselines/tier1_fast_cpu.py`](../baselines/tier1_fast_cpu.py): Automated Feature-Engineered GBDT baseline (Datetime cyclical/lag + Frequency + OOF Target Encoding + Group Aggregations + Text TF-IDF/SVD + Feature Importance export).
 - [`baselines/tier2_strong_dl.py`](../baselines/tier2_strong_dl.py): Multimodal Text OOF Logit Stacking + PyTorch `TabularResNetGatedMLP` with learned `nn.Embedding` and `RankGauss` scaling.
 - [`postprocess.py`](../postprocess.py): Nelder-Mead GBDT + Neural Tabular OOF blender (`optimize_gbdt_neural_blend`), Rank Averaging, and `OptimizedRounder` for ordinal targets.
