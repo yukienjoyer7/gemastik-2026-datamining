@@ -18,6 +18,8 @@
 - `eda_and_data.py` — Unsupervised corpus diagnostics: document length quantiles, exact duplicate & boilerplate header/footer detector, Indonesian+English stopword ratio, Zipf power-law slope/$R^2$, and Hopkins statistic clusterability check.
 - `baselines/tier1_fast_cpu.py` — Standalone Word+Char TF-IDF + LSA + Spherical K-Means + NMF pipeline with automatic $K$ scan (Silhouette / Calinski-Harabasz / Davies-Bouldin) and top-10 c-TF-IDF topic extraction.
 - `baselines/tier2_strong_dl.py` — Standalone BERTopic-style Dense Embedding + UMAP/Spectral + HDBSCAN/K-Means + mandatory `-1` outlier reassignment + c-TF-IDF/MMR topic representation.
-- `modules/clustering_tricks.py` — `reassign_hdbscan_outliers()`, `ConsensusClusterer` (Hungarian & co-association matrix ensemble), and `compute_c_tfidf_topics()`.
+- `modules/hdbscan_outlier_reassignment.py` — `reassign_hdbscan_outliers()` (soft cosine centroid similarity & $k$-NN noise `-1` reassignment with confidence scores).
+- `modules/consensus_clustering.py` — `ConsensusClusterer` (Hungarian algorithm `linear_sum_assignment` label alignment + co-association matrix hierarchical ensemble).
+- `modules/c_tfidf_and_mmr_topics.py` — `compute_c_tfidf_topics()` + Maximal Marginal Relevance (MMR) diverse keyword selection per cluster.
 - `postprocess.py` — 1-step DEC/Sinkhorn self-training centroid refinement and balanced cluster size assignment via `linear_sum_assignment`.
 - `winners/SUMMARY.md` — Curated guide covering BERTopic architecture, SimCSE unsupervised contrastive adaptation, consensus clustering, and handling HDBSCAN noise.
