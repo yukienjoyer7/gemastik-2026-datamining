@@ -62,7 +62,10 @@
 
 ## 3. Implementation Mapping in This Repository
 - [`eda_and_data.py`](../eda_and_data.py): Stage-1 `evaluate_candidate_recall` auditor, corpus cold-start overlap check, and leak-free `GroupKFold` splitter.
-- [`modules/retrieval_and_reranking.py`](../modules/retrieval_and_reranking.py): `MultipleNegativesRankingLoss`, `HardNegativeMiner` (with false-negative margin filtering), `reciprocal_rank_fusion`, `alpha_query_expansion`, and `build_query_context_features`.
+- [`modules/contrastive_mnrl_loss.py`](../modules/contrastive_mnrl_loss.py): `MultipleNegativesRankingLoss` (in-batch + hard negatives with temperature $\tau$ and symmetric loss).
+- [`modules/hard_negative_miner.py`](../modules/hard_negative_miner.py): `HardNegativeMiner` (with false-negative margin filtering `sim <= margin * pos_sim`).
+- [`modules/rank_fusion_and_qe.py`](../modules/rank_fusion_and_qe.py): `reciprocal_rank_fusion` and `alpha_query_expansion`.
+- [`modules/query_context_features.py`](../modules/query_context_features.py): `build_query_context_features` for Stage-2 GBDT reranking.
 - [`baselines/tier1_fast_cpu.py`](../baselines/tier1_fast_cpu.py): Vectorized Okapi BM25 + Word/Char TF-IDF $\rightarrow$ RRF Stage-1 + GBDT Stage-2 reranker.
 - [`baselines/tier2_strong_dl.py`](../baselines/tier2_strong_dl.py): Contrastive Bi-Encoder + Hard Negative Mining + $\alpha$-QE + Cross-Encoder reranker.
 - [`postprocess.py`](../postprocess.py): Mutual $k$-NN score boosting and dynamic $(\tau_{\text{abs}}, \tau_{\text{rel}})$ candidate cutoff optimization for $F_\beta$.
