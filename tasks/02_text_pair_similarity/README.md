@@ -18,6 +18,8 @@
 - `eda_and_data.py` — Union-Find pair graph analyzer (connected components, degree distribution, hubs, cross-fold leakage check), length ratio/symmetry diagnostics, and `TextPairCrossEncoderDataset` with balanced truncation.
 - `baselines/tier1_fast_cpu.py` — Standalone lexical similarity + Magic Pair-Graph features + OOF GBDT (`LightGBM` / `HistGradientBoosting`) pipeline.
 - `baselines/tier2_strong_dl.py` — Standalone Cross-Encoder Transformer OOF pipeline with **Context-Grouping Augmentation**, **Symmetric TTA**, and Pearson/BCE/CE losses.
-- `modules/pair_features_and_biencoder.py` — `BiEncoderInteractionHead`, `CoSENTLoss`, `PearsonCorrelationLoss`, and `PairGraphFeatureExtractor`.
+- `modules/pair_graph_features.py` — `PairGraphFeatureExtractor` (Union-Find connected components, node degree, shared neighbors, Adamic-Adar, Jaccard neighbors, PageRank, 2-hop Personalized PageRank).
+- `modules/biencoder_interaction_head.py` — `BiEncoderInteractionHead` (`[u, v, |u - v|, u * v, cos(u,v)]` MLP classifier/regressor).
+- `modules/similarity_losses.py` — `CoSENTLoss`, `PearsonCorrelationLoss`, `SpearmanSurrogateLoss`, and `ContrastiveMarginLoss`.
 - `postprocess.py` — Transitive triangle consistency propagation across pair graph wedges, MinMax/rank scaling, and F1 threshold optimization.
 - `winners/SUMMARY.md` — Detailed breakdown of U.S. Patent 1st Place, Quora Question Pairs 1st Place, and Shopee Product Matching winning solutions.
