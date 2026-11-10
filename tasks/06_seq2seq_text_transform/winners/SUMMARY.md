@@ -43,7 +43,9 @@ Token-level logit averaging across different Seq2Seq architectures (e.g., `ByT5`
 
 ## 3. Implementation Mapping in This Repository
 - [`eda_and_data.py`](../eda_and_data.py): Source/target length ratio quantiles, Verbatim Copy Ratio, Levenshtein profile, and PyTorch `Seq2SeqDataset`.
-- [`modules/seq2seq_decoding_and_mbr.py`](../modules/seq2seq_decoding_and_mbr.py): `mbr_select_best_hypothesis`, `chrf_score`, `rouge_l_score`, and `normalized_levenshtein`.
+- [`modules/mbr_decoding.py`](../modules/mbr_decoding.py): `mbr_select_best_hypothesis` (Minimum Bayes Risk decoding over $N$-best beam or multi-model hypotheses).
+- [`modules/seq2seq_metrics.py`](../modules/seq2seq_metrics.py): `chrf_score`, `rouge_l_score`, `exact_match_score`, and `normalized_levenshtein`.
+- [`modules/copy_and_edit_aligner.py`](../modules/copy_and_edit_aligner.py): Levenshtein edit-script aligner (`KEEP`, `DELETE`, `INSERT`, `REPLACE` operations).
 - [`baselines/tier1_fast_cpu.py`](../baselines/tier1_fast_cpu.py): Contextual N-gram token replacement lookup model (Normalization/GEC regime) + TF-IDF TextRank sentence extractor (Summarization regime).
 - [`baselines/tier2_strong_dl.py`](../baselines/tier2_strong_dl.py): Encoder-Decoder Seq2Seq OOF trainer with Label Smoothing, $N$-best beam search, and MBR reranking.
 - [`postprocess.py`](../postprocess.py): Consecutive n-gram loop cleaner, length-ratio guardrails, and Multi-Model MBR Ensemble Combiner.

@@ -1,18 +1,15 @@
 """
-Task 06 — Seq2Seq Decoding & Minimum Bayes Risk (MBR) Ensembling Module
-=======================================================================
-Reusable evaluation metrics and Minimum Bayes Risk (MBR) hypothesis selection
-for Sequence-to-Sequence generation tasks:
-  - `rouge_l_score(pred, ref)`: Token-level Longest Common Subsequence (LCS) F1
-  - `chrf_score(pred, ref, n_max=6, beta=2.0)`: Character N-gram F_beta (ChrF)
-  - `normalized_levenshtein(pred, ref)`: `1 - edit_distance / max(len(pred), len(ref))`
-  - `mbr_select_best_hypothesis(candidates, metric, weights)`:
-    Given N candidate strings from N-best beam search or diverse Seq2Seq models,
-    selects the hypothesis `h* = argmax_i sum_j w_j * U(h_i, h_j)` that maximizes
-    expected utility against the full candidate pool.
+Task 06 — Pure-Python Vectorized Seq2Seq Evaluation Metrics
+===========================================================
+Standalone evaluation metrics for Sequence-to-Sequence generation, Machine Translation,
+Text Normalization, and Grammatical Error Correction:
+  - `chrf_score(pred, ref, n_max=6, beta=2.0)` + `batch_chrf_score`
+  - `rouge_l_score(pred, ref, beta=1.0)` + `batch_rouge_l_score`
+  - `exact_match_score(pred, ref, normalize_ws=True)` + `batch_exact_match_score`
+  - `normalized_levenshtein(pred, ref)` + `batch_normalized_levenshtein`
 
 Usage:
-  python3 seq2seq_decoding_and_mbr.py --smoke-test
+  python3 seq2seq_metrics.py --smoke-test
 """
 
 from __future__ import annotations
@@ -25,7 +22,7 @@ import tempfile
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Sequence, Tuple
+from typing import Dict, List, Sequence
 
 _venv_site = (
     Path.home()
@@ -43,8 +40,7 @@ import pandas as pd
 
 @dataclass
 class CFG:
-    exp_name: str = "seq2seq_mbr_module"
-    default_metric: str = "chrf"
+    exp_name: str = "seq2seq_metrics"
     chrf_max_n: int = 6
     chrf_beta: float = 2.0
 
@@ -54,6 +50,16 @@ TOKEN_RE = re.compile(r"\w+|[^\w\s]", flags=re.UNICODE)
 
 def tokenize(text: str) -> List[str]:
     return TOKEN_RE.findall(str(text).lower())
+
+
+def exact_match_score(pred: str, ref: str, normalize_ws: bool = True) -> float:
+    """Computes normalized Exact Match (1.0 if identical after whitespace normalization, else 0.0)."""
+    p_str = str(pred)
+    r_str = str(ref)
+    if normalize_ws:
+        p_str = re.sub(r"\s+", " ", p_str.strip()).lower()
+        r_str = re.sub(r"\s+", " ", r_str.strip()).lower()
+    return 1.0 if p_str == r_str else 0.0
 
 
 def normalized_levenshtein(pred: str, ref: str) -> float:
@@ -149,93 +155,56 @@ def chrf_score(pred: str, ref: str, n_max: int = 6, beta: float = 2.0) -> float:
     return (1.0 + beta2) * avg_prec * avg_rec / (beta2 * avg_prec + avg_rec)
 
 
-def _get_similarity_fn(metric: str) -> Callable[[str, str], float]:
-    metric_lower = metric.lower()
-    if metric_lower == "chrf":
-        return chrf_score
-    if metric_lower == "rouge_l":
-        return rouge_l_score
-    if metric_lower in ("levenshtein", "edit"):
-        return normalized_levenshtein
-    raise ValueError(f"Unsupported MBR metric: {metric}")
-
-
-def mbr_select_best_hypothesis(
-    candidates_list: Sequence[str],
-    metric: str = "chrf",
-    weights: Sequence[float] | None = None,
-    return_scores: bool = False,
-) -> str | Tuple[str, np.ndarray]:
-    """
-    Minimum Bayes Risk (MBR) Decoding over a list of candidate strings.
-    Selects the candidate `h_i` that maximizes expected similarity `sum_j w_j * sim(h_i, h_j)`
-    against all hypotheses in `candidates_list`.
-    """
-    cands = [str(c) for c in candidates_list]
-    n = len(cands)
-    if n == 0:
-        return ("", np.zeros(0, dtype=np.float32)) if return_scores else ""
-    if n == 1:
-        return (cands[0], np.ones(1, dtype=np.float32)) if return_scores else cands[0]
-
-    sim_fn = _get_similarity_fn(metric)
-    w = (
-        np.asarray(weights, dtype=np.float64)
-        if weights is not None
-        else np.ones(n, dtype=np.float64)
+def evaluate_seq2seq_corpus(
+    preds: Sequence[str], refs: Sequence[str], cfg: CFG | None = None
+) -> Dict[str, float]:
+    """Vectorized corpus-level evaluation across ChrF, ROUGE-L, Levenshtein, and Exact Match."""
+    cfg = cfg or CFG()
+    chrf_arr = np.array(
+        [chrf_score(p, r, n_max=cfg.chrf_max_n, beta=cfg.chrf_beta) for p, r in zip(preds, refs)],
+        dtype=np.float32,
     )
-    w = w / np.sum(w)
+    rouge_arr = np.array([rouge_l_score(p, r) for p, r in zip(preds, refs)], dtype=np.float32)
+    lev_arr = np.array(
+        [normalized_levenshtein(p, r) for p, r in zip(preds, refs)], dtype=np.float32
+    )
+    em_arr = np.array([exact_match_score(p, r) for p, r in zip(preds, refs)], dtype=np.float32)
 
-    sim_matrix = np.eye(n, dtype=np.float64)
-    for i in range(n):
-        for j in range(i + 1, n):
-            s = sim_fn(cands[i], cands[j])
-            sim_matrix[i, j] = s
-            sim_matrix[j, i] = s
-
-    expected_utility = (sim_matrix @ w).astype(np.float32)
-    best_idx = int(np.argmax(expected_utility))
-    if return_scores:
-        return cands[best_idx], expected_utility
-    return cands[best_idx]
+    return {
+        "chrf": float(np.mean(chrf_arr)) if len(chrf_arr) else 0.0,
+        "rouge_l": float(np.mean(rouge_arr)) if len(rouge_arr) else 0.0,
+        "normalized_levenshtein": float(np.mean(lev_arr)) if len(lev_arr) else 0.0,
+        "exact_match": float(np.mean(em_arr)) if len(em_arr) else 0.0,
+    }
 
 
 def _run_smoke_test(cfg: CFG) -> None:
-    ref = "saya sudah mengirim dokumen laporan keuangan kemarin sore"
-    beams = [
-        "saya sudah mengirim dokumen laporan keuangan kemarin",
+    refs = [
         "saya sudah mengirim dokumen laporan keuangan kemarin sore",
-        "saya sudah kirim dokumen laporan keuangan kemarin sore",
-        "dokumen keuangan sudah dikirim oleh saya kemarin malam",
-        "saya sdh mengirim dokumen laporan kemarin sore",
+        "pemerintah daerah mengumumkan kebijakan pajak baru",
     ]
-    best_chrf, utilities = mbr_select_best_hypothesis(
-        beams, metric="chrf", return_scores=True
-    )
-    best_rouge = mbr_select_best_hypothesis(beams, metric="rouge_l")
-    best_lev = mbr_select_best_hypothesis(beams, metric="levenshtein")
-
-    c_score = chrf_score(best_chrf, ref)
-    r_score = rouge_l_score(best_rouge, ref)
-    l_score = normalized_levenshtein(best_lev, ref)
+    preds = [
+        "saya sudah mengirim dokumen laporan keuangan kemarin sore",
+        "pemerintah daerah mengumumkan kebijakan baru",
+    ]
+    metrics = evaluate_seq2seq_corpus(preds, refs, cfg)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         out_dir = Path(tmpdir)
-        np.save(out_dir / f"oof_{cfg.exp_name}.npy", utilities)
-        np.save(out_dir / f"test_{cfg.exp_name}.npy", np.array([c_score, r_score, l_score], dtype=np.float32))
-        pd.DataFrame({"id": [0], "prediction": [best_chrf]}).to_csv(
-            out_dir / f"sub_{cfg.exp_name}.csv", index=False
-        )
+        arr = np.array(list(metrics.values()), dtype=np.float32)
+        np.save(out_dir / f"oof_{cfg.exp_name}.npy", arr)
+        np.save(out_dir / f"test_{cfg.exp_name}.npy", arr)
+        pd.DataFrame([metrics]).to_csv(out_dir / f"sub_{cfg.exp_name}.csv", index=False)
 
     print(
-        f"[Smoke Test OK] MBR selected='{best_chrf}' | "
-        f"ChrF={c_score:.4f}, ROUGE-L={r_score:.4f}, Levenshtein={l_score:.4f}"
+        f"[Smoke Test OK] ChrF={metrics['chrf']:.4f}, ROUGE-L={metrics['rouge_l']:.4f}, "
+        f"Levenshtein={metrics['normalized_levenshtein']:.4f}, EM={metrics['exact_match']:.4f}"
     )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Task 06 MBR Decoding & Metrics Module")
-    parser.add_argument("--smoke-test", action="store_true")
+    parser = argparse.ArgumentParser(description="Task 06 Seq2Seq Metrics Module")
+    parser.add_argument("--smoke-test", action="store_true", help="Run fast module smoke test")
     args = parser.parse_args()
 
     cfg = CFG()

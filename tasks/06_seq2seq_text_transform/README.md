@@ -17,12 +17,14 @@
 - **Tier 2 (Encoder-Decoder Fine-Tuning + N-Best Beam Search):**
   - `ByT5` / `mT5` / `mBART` / `IndoT5` with Label Smoothing ($\epsilon = 0.10$) and $N$-best beam hypothesis export (`tier2_strong_dl.py`).
 - **Tier 3 (MBR Decoding & Post-Processing):**
-  - Minimum Bayes Risk (`mbr_select_best_hypothesis` in `modules/seq2seq_decoding_and_mbr.py`) + consecutive n-gram loop cleaner and multi-model MBR ensemble (`postprocess.py`).
+  - Minimum Bayes Risk (`mbr_select_best_hypothesis` in `modules/mbr_decoding.py`) + consecutive n-gram loop cleaner and multi-model MBR ensemble (`postprocess.py`).
 
 ## 4. Directory Contents
 - [`eda_and_data.py`](eda_and_data.py) — Length ratio quantiles, Verbatim Copy Ratio & Edit Distance Profile, and PyTorch `Seq2SeqDataset`.
 - [`baselines/tier1_fast_cpu.py`](baselines/tier1_fast_cpu.py) — Contextual N-gram token replacement aligner + TF-IDF TextRank sentence selector.
 - [`baselines/tier2_strong_dl.py`](baselines/tier2_strong_dl.py) — Encoder-Decoder OOF trainer with Label Smoothing, $N$-best beam search, and MBR reranking.
-- [`modules/seq2seq_decoding_and_mbr.py`](modules/seq2seq_decoding_and_mbr.py) — `mbr_select_best_hypothesis`, `chrf_score`, `rouge_l_score`, and `normalized_levenshtein`.
+- [`modules/mbr_decoding.py`](modules/mbr_decoding.py) — `mbr_select_best_hypothesis` (Minimum Bayes Risk decoding over $N$-best beam or multi-model hypotheses).
+- [`modules/seq2seq_metrics.py`](modules/seq2seq_metrics.py) — Pure-Python vectorized `chrf_score`, `rouge_l_score`, `exact_match_score`, and `normalized_levenshtein`.
+- [`modules/copy_and_edit_aligner.py`](modules/copy_and_edit_aligner.py) — Word/character Levenshtein edit-script aligner (`KEEP`, `DELETE`, `INSERT`, `REPLACE` operations).
 - [`postprocess.py`](postprocess.py) — Repeated n-gram loop stripper, whitespace/punctuation normalizer, length ratio guardrails, and Multi-Model MBR Ensemble Combiner.
 - [`winners/SUMMARY.md`](winners/SUMMARY.md) — Curated competition references on Text Normalization, GEC (`ByT5`), Summarization, and MBR Ensembling.
