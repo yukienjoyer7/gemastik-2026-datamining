@@ -22,6 +22,10 @@
 - `eda_and_data.py` — Class balance, per-class length quantiles, train-test vocabulary OOV overlap, Dirichlet-smoothed log-odds n-grams, `TextClassificationDataset` (Head+Tail truncation), and `DynamicPaddingCollator`.
 - `baselines/tier1_fast_cpu.py` — Standalone Word `(1,3)` + Char-wb `(3,5)` TF-IDF + Lexical stats OOF ensemble (`LogisticRegression` + `CalibratedClassifierCV(LinearSVC)` + `RidgeClassifier`).
 - `baselines/tier2_strong_dl.py` — Standalone PyTorch + HuggingFace OOF trainer with selectable pooling, Multi-Sample Dropout, LLRD, AMP, Cosine schedule, AWP, and ModelEMA.
-- `modules/pooling_and_regularization.py` — Reusable `MeanPooling`, `MaxPooling`, `MeanMaxPooling`, `AttentionPooling`, `WeightedLayerPooling`, `MultiSampleDropout`, `AWP`, `ModelEMA`, and `RDropClassificationLoss`.
+- `modules/pooling_heads.py` — `MeanPooling`, `MaxPooling`, `MeanMaxPooling`, `AttentionPooling`, `WeightedLayerPooling`, and `GeMPooling`.
+- `modules/awp.py` — `AWP` (Adversarial Weight Perturbation) with step/restore and loss threshold triggers.
+- `modules/ema.py` — `ModelEMA` (Exponential Moving Average of model weights with warmup-aware decay).
+- `modules/llrd_and_schedulers.py` — `get_llrd_optimizer_params` (Layer-wise Learning Rate Decay), linear/cosine warmup schedulers, `MultiSampleDropout`, and `RDropClassificationLoss`.
+- `modules/long_text_chunking.py` — `head_tail_truncate_ids`, `split_into_sliding_windows`, and `SlidingWindowChunkAggregator` (mean, max, or attention chunk pooling).
 - `postprocess.py` — Temperature scaling calibration, Nelder-Mead class probability multiplier optimizer for Macro-F1, and `select_pseudo_labels()`.
 - `winners/SUMMARY.md` — Curated Kaggle & Indonesian NLP competition winning solutions and architectural playbook.
