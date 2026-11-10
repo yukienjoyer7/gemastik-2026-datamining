@@ -20,6 +20,8 @@
 - `eda_and_data.py` — Multilabel diagnostics: head vs. tail label frequency distribution, label cardinality histogram, zero-label sample check, pairwise co-occurrence matrix, and conditional probability $P(y_j=1 \mid y_i=1)$ hierarchy rule detector.
 - `baselines/tier1_fast_cpu.py` — Standalone Word+Char TF-IDF + SVD **2-Stage Out-Of-Fold Classifier Chain** exploiting label correlations without leakage.
 - `baselines/tier2_strong_dl.py` — Standalone Multi-label Transformer OOF trainer supporting `BCEWithLogitsLoss`, `AsymmetricLossOptimized (ASL)`, and `ZLPRLoss`, plus **Label-Aware Prompting** and **Label-Wise Attention Head**.
-- `modules/multilabel_losses_and_heads.py` — Reusable `AsymmetricLoss`, `ZLPRLoss`, `LabelWiseAttentionHead`, and `HierarchicalConstraintEnforcer`.
+- `modules/asymmetric_and_zlpr_loss.py` — `AsymmetricLoss` (ASL), `ZLPRLoss`, and dampened inverse-prior `compute_pos_weight`.
+- `modules/label_wise_attention_head.py` — `LabelWiseAttentionHead` (each of the $L$ labels attends independently over sequence token representations).
+- `modules/hierarchy_and_cooccurrence.py` — `HierarchicalConstraintEnforcer` ($P(\text{parent}) \ge P(\text{child})$) + `LabelCooccurrenceFeatureBuilder` (computes OOF label co-occurrence conditional probability meta-features).
 - `postprocess.py` — Empirical-Bayes support-regularized per-class threshold optimizer + minimum-1-label argmax fallback.
 - `winners/SUMMARY.md` — Detailed breakdown of Kaggle Mechanisms of Action (MoA), Jigsaw Toxic Comment Multilabel, and Planet Amazon winning solutions.
