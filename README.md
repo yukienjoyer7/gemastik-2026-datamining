@@ -15,6 +15,7 @@ Practical, competition-oriented repository of standalone Python scripts, validat
 - **[`00_core/tabular_gbdt/`](./00_core/tabular_gbdt/README.md)** — Unified OOF training & inference templates for LightGBM, CatBoost, and XGBoost.
 - **[`00_core/ensembling/`](./00_core/ensembling/README.md)** — Out-of-fold hill climbing, Nelder-Mead/Dirichlet blending, rank averaging, power averaging, and Ridge/MLP stacking.
 - **[`00_core/tracking_and_utils/`](./00_core/tracking_and_utils/README.md)** — Deterministic seed locking, dataframe memory compression, execution timers, and offline Hugging Face loading helpers.
+- **[`00_core/indonesian_nlp/`](./00_core/indonesian_nlp/README.md)** — Indonesian slang/alay/old-spelling normalizer, Judol/Pinjol/toxic de-obfuscator, Pantun/Syair prosody & syllabifier, Nusantara regional dialect detector, and Rupiah/Address/Date/Legal extractors.
 
 ### Task-Specific Playbooks & Standalone Templates (`tasks/`)
 Each task folder is self-contained with its own decision playbook (`README.md`), standalone baselines (`baselines/`), reusable drop-in tricks (`modules/`), and curated competition solutions (`winners/SUMMARY.md`):
@@ -29,6 +30,10 @@ Each task folder is self-contained with its own decision playbook (`README.md`),
 | **06** | **Seq2Seq & Text Transformation** | [`tasks/06_seq2seq_text_transform/`](./tasks/06_seq2seq_text_transform/README.md) | Encoder-Decoder (T5/mT5/BART), decoding strategies, GEC/summarization/normalization, BLEU/ROUGE/ChrF |
 | **07** | **Token Classification & NER** | [`tasks/07_token_classification_ner/`](./tasks/07_token_classification_ner/README.md) | Subword offset mapping, sliding-window stride aggregation, CRF/Span heads, BIO post-processing, span F1 |
 | **08** | **Tabular & Multimodal Fusion** | [`tasks/08_tabular_and_multimodal/`](./tasks/08_tabular_and_multimodal/README.md) | Out-of-fold target encoding, group aggregations, text+tabular fusion (OOF embeddings $\rightarrow$ GBDT) |
+| **09** | **Aspect-Based Sentiment (ABSA)** | [`tasks/09_aspect_based_sentiment_absa/`](./tasks/09_aspect_based_sentiment_absa/README.md) | Multi-aspect sentiment (ACSA) & triplet extraction (ASTE), auxiliary-sentence NLI prompts, multi-aspect attention |
+| **10** | **Thread & Graph-Structured Text** | [`tasks/10_thread_and_graph_text/`](./tasks/10_thread_and_graph_text/README.md) | Reply trees & citation graphs, `[ROOT]+[PARENT]+[TARGET]` context serialization, OOF graph label propagation |
+| **11** | **Semi-Structured Log, Markup & Code** | [`tasks/11_semi_structured_log_and_code/`](./tasks/11_semi_structured_log_and_code/README.md) | HTML/DOM/JSON/XML, Drain log template mining, SQLi/XSS/URL payload entropy, AST/byte-aware classification |
+| **12** | **Symbolic, SMILES & Bio Sequences** | [`tasks/12_symbolic_and_bio_sequences/`](./tasks/12_symbolic_and_bio_sequences/README.md) | Chemical SMILES (*Jamu*/drug bioactivity) & DNA/RNA/Protein FASTA, case-sensitive $k$-mers, 1D Dilated ResNet + TTA |
 
 ### Offline & Competition Preparation (`offline_prep/`)
 - **[`offline_prep/README.md`](./offline_prep/README.md)** — Pre-competition checklist for local wheels, pretrained Hugging Face caches (English + Indonesian/multilingual backbones), and NLTK/spaCy/Sastrawi assets.
