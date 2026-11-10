@@ -13,15 +13,17 @@
 - **Tier 1 (CPU Fast):** Multi-word `DictionaryTrie` entity gazetteer + contextual orthographic features ($w_{-2}..w_{+2}$) + OOF linear classifier with **Viterbi BIO Transition Decoding** (`tier1_fast_cpu.py`).
 - **Tier 2 (Sliding-Window Character-Aligned Transformer + BiLSTM):**
   - Handles arbitrarily long documents via overlapping windows (`max_length=512, stride=128, return_offsets_mapping=True`).
-  - Projects overlapping window token probabilities into **character-level probability arrays `(doc_char_len, num_classes)`** (`tier2_strong_dl.py` & `modules/ner_heads_and_alignment.py`), allowing seamless ensembling across incompatible tokenizers!
+  - Projects overlapping window token probabilities into **character-level probability arrays `(doc_char_len, num_classes)`** (`tier2_strong_dl.py` & `modules/char_span_aggregator.py`), allowing seamless ensembling across incompatible tokenizers!
 - **Tier 3 (CRF Head & Post-Processing):**
-  - Pure-PyTorch `LinearChainCRF` (`modules/ner_heads_and_alignment.py`).
+  - Pure-PyTorch `LinearChainCRF` with BIO transition constraints (`modules/linear_chain_crf.py`).
   - Per-class probability threshold & minimum span length coordinate optimizer for $F_\beta$ + BIO transition repair + adjacent span merging + 1D Span NMS (`postprocess.py`).
 
 ## 4. Directory Contents
 - [`eda_and_data.py`](eda_and_data.py) — Entity type counts, span length distributions, whitespace boundary audit, and Round-Trip `offset_mapping` Verification Function.
 - [`baselines/tier1_fast_cpu.py`](baselines/tier1_fast_cpu.py) — Multi-word `DictionaryTrie` gazetteer + contextual orthographic features + Viterbi BIO decoder.
 - [`baselines/tier2_strong_dl.py`](baselines/tier2_strong_dl.py) — Sliding-Window Character-Aligned Transformer + Residual BiLSTM NER OOF pipeline.
-- [`modules/ner_heads_and_alignment.py`](modules/ner_heads_and_alignment.py) — Pure-PyTorch `LinearChainCRF`, `token_probs_to_char_probs`, `char_probs_to_spans`, and strict entity-level evaluator.
+- [`modules/linear_chain_crf.py`](modules/linear_chain_crf.py) — Pure-PyTorch `LinearChainCRF` (exact log-sum-exp forward partition + Viterbi decoding + BIO transition mask constraint).
+- [`modules/char_span_aggregator.py`](modules/char_span_aggregator.py) — `token_probs_to_char_probs` & `char_probs_to_spans` (projects subword probabilities onto character-level arrays for multi-tokenizer ensembling).
+- [`modules/span_metrics.py`](modules/span_metrics.py) — `evaluate_entity_spans` (strict entity-level Micro-F1, Macro-F1, and $F_\beta$ evaluator).
 - [`postprocess.py`](postprocess.py) — BIO sequence repair, adjacent span merger, Per-Class Probability Threshold & Minimum Span Length Optimizer ($F_5$), and 1D Span NMS.
 - [`winners/SUMMARY.md`](winners/SUMMARY.md) — Detailed breakdown of winning solutions (Kaggle PII Data Detection 1st, NBME 1st, Feedback Prize 1st/2nd).

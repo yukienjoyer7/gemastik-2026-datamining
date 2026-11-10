@@ -54,7 +54,9 @@
 
 ## 3. Implementation Mapping in This Repository
 - [`eda_and_data.py`](../eda_and_data.py): Entity density/length diagnostics, leading/trailing whitespace boundary audit, and `verify_round_trip_offset_mapping` (verifies 100% round-trip F1 ceiling before training).
-- [`modules/ner_heads_and_alignment.py`](../modules/ner_heads_and_alignment.py): Pure-PyTorch `LinearChainCRF` (forward log-partition + Viterbi decode), `token_probs_to_char_probs`, `char_probs_to_spans`, and strict entity-level `evaluate_entity_spans`.
+- [`modules/linear_chain_crf.py`](../modules/linear_chain_crf.py): Pure-PyTorch `LinearChainCRF` (forward log-partition + Viterbi decode + BIO transition constraints).
+- [`modules/char_span_aggregator.py`](../modules/char_span_aggregator.py): `token_probs_to_char_probs` and `char_probs_to_spans` for multi-tokenizer character-level ensembling.
+- [`modules/span_metrics.py`](../modules/span_metrics.py): Strict entity-level `evaluate_entity_spans` (Micro-F1, Macro-F1, $F_\beta$).
 - [`baselines/tier1_fast_cpu.py`](../baselines/tier1_fast_cpu.py): Multi-word `DictionaryTrie` gazetteer + contextual orthographic feature extractor + OOF linear classifier with **Viterbi BIO Transition Decoding**.
 - [`baselines/tier2_strong_dl.py`](../baselines/tier2_strong_dl.py): Sliding-Window Character-Aligned Transformer + Residual BiLSTM NER OOF pipeline.
 - [`postprocess.py`](../postprocess.py): `repair_bio_sequence`, `merge_adjacent_same_label_spans`, `span_nms`, and `optimize_per_class_thresholds_and_min_len` for $F_\beta$.
